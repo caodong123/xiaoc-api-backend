@@ -1,5 +1,6 @@
 package com.yupi.springbootinit.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.springbootinit.annotation.AuthCheck;
 import com.yupi.springbootinit.common.BaseResponse;
@@ -19,12 +20,15 @@ import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.service.InterfaceInfoService;
 import com.yupi.springbootinit.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+
+import static com.yupi.springbootinit.constant.CommonConstant.SORT_ORDER_ASC;
 
 /**
  * 帖子接口
@@ -136,38 +140,76 @@ public class InterfaceInfoController {
     }
 
     /**
-     * 分页获取列表（仅管理员）
+     * 获取列表（仅管理员）
      *
      * @param interfaceInfoQueryRequest
      * @return
      */
-/*
-    @PostMapping("/list/page")
+    @GetMapping("/list")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<InterfaceInfo>> listInterfaceInfoByPage(@RequestBody InterfaceInfoQueryRequest interfaceInfoQueryRequest) {
-        long current = interfaceInfoQueryRequest.getCurrent();
-        long size = interfaceInfoQueryRequest.getPageSize();
-        Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size),
-                interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
-        return ResultUtils.success(interfaceInfoPage);
+    public BaseResponse<List<InterfaceInfo>> listInterfaceInfo(InterfaceInfoQueryRequest interfaceInfoQueryRequest) {
+        if(interfaceInfoQueryRequest==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        List<InterfaceInfo> interfaceInfoList = interfaceInfoService.list(interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
+        return ResultUtils.success(interfaceInfoList);
     }
-*/
 
     /**
-     * 分页获取列表（封装类）
+     * 分页获取列表
      *
      * @param interfaceInfoQueryRequest
      * @param request
      * @return
      */
-    @PostMapping("/list/page")
-    public BaseResponse<Page<InterfaceInfo>> listInterfaceInfoByPage(@RequestBody InterfaceInfoQueryRequest interfaceInfoQueryRequest,
+    @GetMapping("/list/page")
+    public BaseResponse<Page<InterfaceInfo>> listInterfaceInfoByPage(InterfaceInfoQueryRequest interfaceInfoQueryRequest,
             HttpServletRequest request) {
-        long current = interfaceInfoQueryRequest.getCurrent();
-        long size = interfaceInfoQueryRequest.getPageSize();
-        // 限制爬虫
-        ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size),
+        if(interfaceInfoQueryRequest==null){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        int current = interfaceInfoQueryRequest.getCurrent();
+        int pageSize = interfaceInfoQueryRequest.getPageSize();
+        //避免爬虫
+        if(pageSize>20){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        String name = interfaceInfoQueryRequest.getName();
+        String description = interfaceInfoQueryRequest.getDescription();
+        String url = interfaceInfoQueryRequest.getUrl();
+        String requestHeader = interfaceInfoQueryRequest.getRequestHeader();
+        String responseHeader = interfaceInfoQueryRequest.getResponseHeader();
+        Integer status = interfaceInfoQueryRequest.getStatus();
+        String method = interfaceInfoQueryRequest.getMethod();
+        String sortField = interfaceInfoQueryRequest.getSortField();
+        String sortOrder = interfaceInfoQueryRequest.getSortOrder();
+        QueryWrapper<InterfaceInfo> queryWrapper = new QueryWrapper<>();
+        //模糊匹配
+        if(StringUtils.isNotBlank(name)){
+            queryWrapper.like("name",name);
+        }
+        if(StringUtils.isNotBlank(description)){
+            queryWrapper.like("description",description);
+        }
+        if(StringUtils.isNotBlank(requestHeader)){
+            queryWrapper.like("requestHeader",requestHeader);
+        }
+        if(StringUtils.isNotBlank(responseHeader)){
+            queryWrapper.like("responseHeader",responseHeader);
+        }
+        if(StringUtils.isNotBlank(url)){
+            queryWrapper.like("url",url);
+        }
+        //精准匹配
+        if(status==null){
+            queryWrapper.eq("status",status);
+        }
+        if(StringUtils.isNotBlank(method)){
+            queryWrapper.like("method",method);
+        }
+        //排序
+        queryWrapper.orderBy(StringUtils.isNotBlank(sortField),sortOrder.equals(SORT_ORDER_ASC),sortField);
+        Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, pageSize),
                 interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
         return ResultUtils.success(interfaceInfoPage);
     }
@@ -192,18 +234,6 @@ public class InterfaceInfoController {
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, size),
-                interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
-        return ResultUtils.success(interfaceInfoPage);
-    }
-
-    /**
-     * 分页查询
-     */
-    @GetMapping("/list/page")
-    public BaseResponse<Page<InterfaceInfo>> listByPage(@RequestParam Integer current,@RequestParam Integer pageSize){
-        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR);
-        InterfaceInfoQueryRequest interfaceInfoQueryRequest = new InterfaceInfoQueryRequest();
-        Page<InterfaceInfo> interfaceInfoPage = interfaceInfoService.page(new Page<>(current, pageSize),
                 interfaceInfoService.getQueryWrapper(interfaceInfoQueryRequest));
         return ResultUtils.success(interfaceInfoPage);
     }
