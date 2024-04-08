@@ -1,0 +1,4 @@
+xiaoc:
+  client:
+    secret-key: 123456
+    access-key: abcdefg

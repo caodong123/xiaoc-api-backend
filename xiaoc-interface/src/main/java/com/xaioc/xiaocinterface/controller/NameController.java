@@ -1,9 +1,11 @@
 package com.xaioc.xiaocinterface.controller;
 
-import com.xaioc.xiaocinterface.model.User;
-import com.xaioc.xiaocinterface.utils.SignUtils;
-import jakarta.servlet.http.HttpServletRequest;
+
+import com.xiaoc.sdktest.model.User;
+import com.xiaoc.sdktest.utils.SignUtils;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/name")

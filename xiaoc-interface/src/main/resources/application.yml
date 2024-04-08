@@ -5,3 +5,7 @@ server:
   port: 8123
   servlet:
     context-path: /api
+xiaoc:
+  client:
+    access-key: caodong
+    secret-key: abcdefg
